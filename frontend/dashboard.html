@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurant Dashboard 📊</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .navbar h1 { font-size: 1.5em; }
+        
+        .live-badge {
+            background: #48bb78;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            padding: 25px 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+
+        .stat-card .icon { font-size: 2em; margin-bottom: 8px; }
+        .stat-card .number { 
+            font-size: 2em; 
+            font-weight: bold; 
+            color: #764ba2; 
+        }
+        .stat-card .label { 
+            color: #888; 
+            font-size: 0.9em;
+            margin-top: 4px;
+        }
+
+        .orders-section {
+            padding: 0 30px 30px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .section-header h2 { 
+            color: #333; 
+            font-size: 1.3em;
+        }
+
+        .refresh-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+
+        .order-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            border-left: 5px solid #667eea;
+            transition: transform 0.2s;
+        }
+
+        .order-card:hover { transform: translateX(5px); }
+
+        .order-card.received { border-left-color: #667eea; }
+        .order-card.preparing { border-left-color: #ed8936; }
+        .order-card.ready { border-left-color: #48bb78; }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .order-id { 
+            font-weight: bold; 
+            color: #333;
+            font-size: 1.1em;
+        }
+
+        .order-time { 
+            color: #888; 
+            font-size: 0.85em; 
+        }
+
+        .order-text {
+            background: #f8f4ff;
+            border-radius: 8px;
+            padding: 10px;
+            color: #555;
+            font-style: italic;
+            margin-bottom: 12px;
+        }
+
+        .order-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .order-items-text { 
+            color: #555;
+            font-size: 0.95em;
+        }
+
+        .order-total {
+            font-weight: bold;
+            color: #764ba2;
+            font-size: 1.1em;
+        }
+
+        .status-controls {
+            margin-top: 12px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .status-btn {
+            padding: 6px 14px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85em;
+            font-weight: bold;
+            transition: transform 0.1s;
+        }
+
+        .status-btn:hover { transform: scale(1.05); }
+
+        .btn-preparing { 
+            background: #fef3cd; 
+            color: #856404;
+        }
+        .btn-ready { 
+            background: #d4edda; 
+            color: #155724;
+        }
+        .btn-delivered { 
+            background: #cce5ff; 
+            color: #004085;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
+        .badge-received { background: #e8eaff; color: #667eea; }
+        .badge-preparing { background: #fef3cd; color: #856404; }
+        .badge-ready { background: #d4edda; color: #155724; }
+        .badge-delivered { background: #cce5ff; color: #004085; }
+
+        .no-orders {
+            text-align: center;
+            padding: 50px;
+            color: #888;
+        }
+
+        .no-orders .icon { font-size: 3em; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h1>🍕 Restaurant Dashboard</h1>
+        <span class="live-badge">🟢 Live</span>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="icon">📋</div>
+            <div class="number" id="totalOrders">0</div>
+            <div class="label">Total Orders</div>
+        </div>
+        <div class="stat-card">
+            <div class="icon">🔄</div>
+            <div class="number" id="activeOrders">0</div>
+            <div class="label">Active Orders</div>
+        </div>
+        <div class="stat-card">
+            <div class="icon">✅</div>
+            <div class="number" id="completedOrders">0</div>
+            <div class="label">Delivered</div>
+        </div>
+        <div class="stat-card">
+            <div class="icon">💰</div>
+            <div class="number" id="totalEarnings">₹0</div>
+            <div class="label">Total Earnings</div>
+        </div>
+    </div>
+
+    <!-- Orders -->
+    <div class="orders-section">
+        <div class="section-header">
+            <h2>📦 Saare Orders</h2>
+            <button class="refresh-btn" onclick="loadOrders()">🔄 Refresh</button>
+        </div>
+        <div id="ordersList">
+            <div class="no-orders">
+                <div class="icon">⏳</div>
+                <p>Orders load ho rahe hain...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API = "http://127.0.0.1:8000";
+
+        async function loadOrders() {
+            try {
+                const res = await fetch(`${API}/orders`);
+                const data = await res.json();
+                
+                updateStats(data.orders);
+                renderOrders(data.orders);
+            } catch(e) {
+                document.getElementById('ordersList').innerHTML = `
+                    <div class="no-orders">
+                        <div class="icon">❌</div>
+                        <p>Server se connect nahi ho pa raha!</p>
+                    </div>
+                `;
+            }
+        }
+
+        function updateStats(orders) {
+            const total = orders.length;
+            const active = orders.filter(o => 
+                o.status === 'received' || o.status === 'preparing'
+            ).length;
+            const completed = orders.filter(o => o.status === 'delivered').length;
+            const earnings = orders.reduce((sum, o) => sum + o.total, 0);
+
+            document.getElementById('totalOrders').textContent = total;
+            document.getElementById('activeOrders').textContent = active;
+            document.getElementById('completedOrders').textContent = completed;
+            document.getElementById('totalEarnings').textContent = `₹${earnings}`;
+        }
+
+        function renderOrders(orders) {
+            const list = document.getElementById('ordersList');
+            
+            if(orders.length === 0) {
+                list.innerHTML = `
+                    <div class="no-orders">
+                        <div class="icon">🍽️</div>
+                        <p>Abhi koi order nahi hai</p>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = orders.map(order => `
+                <div class="order-card ${order.status}" id="order-${order.id}">
+                    <div class="order-header">
+                        <span class="order-id">Order #${order.id}</span>
+                        <div>
+                            <span class="status-badge badge-${order.status}">
+                                ${getStatusText(order.status)}
+                            </span>
+                            <span class="order-time">
+                                🕐 ${formatTime(order.time)}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="order-text">💬 "${order.customer_text}"</div>
+                    <div class="order-details">
+                        <span class="order-items-text">🍽️ ${order.items}</span>
+                        <span class="order-total">₹${order.total}</span>
+                    </div>
+                    <div class="status-controls">
+                        ${getStatusButtons(order.id, order.status)}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getStatusText(status) {
+            const texts = {
+                'received': '📥 Received',
+                'preparing': '👨‍🍳 Preparing',
+                'ready': '✅ Ready',
+                'delivered': '🚀 Delivered'
+            };
+            return texts[status] || status;
+        }
+
+        function getStatusButtons(id, status) {
+            if(status === 'received') return `
+                <button class="status-btn btn-preparing" 
+                    onclick="updateStatus(${id}, 'preparing')">
+                    👨‍🍳 Preparing Karo
+                </button>
+            `;
+            if(status === 'preparing') return `
+                <button class="status-btn btn-ready" 
+                    onclick="updateStatus(${id}, 'ready')">
+                    ✅ Ready Hai
+                </button>
+            `;
+            if(status === 'ready') return `
+                <button class="status-btn btn-delivered" 
+                    onclick="updateStatus(${id}, 'delivered')">
+                    🚀 Deliver Karo
+                </button>
+            `;
+            return '<span style="color:#48bb78">✅ Delivered!</span>';
+        }
+
+        function formatTime(timeStr) {
+            const date = new Date(timeStr);
+            return date.toLocaleTimeString('hi-IN', {
+                hour: '2-digit', 
+                minute: '2-digit'
+            });
+        }
+
+        async function updateStatus(orderId, newStatus) {
+            try {
+                await fetch(`${API}/orders/${orderId}/status?status=${newStatus}`, {
+                    method: 'PUT'
+                });
+                loadOrders();
+            } catch(e) {
+                alert("Status update nahi ho paya!");
+            }
+        }
+
+        // Load on start
+        loadOrders();
+        
+        // Auto refresh har 10 seconds mein
+        setInterval(loadOrders, 10000);
+    </script>
+</body>
+</html>
