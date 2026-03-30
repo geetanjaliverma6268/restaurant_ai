@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-client = Groq(api_key="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")
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 MENU = {
     "burger": 120,
