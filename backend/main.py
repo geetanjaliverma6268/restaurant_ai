@@ -5,8 +5,20 @@ from sqlalchemy.orm import Session
 from backend.ai_brain import analyze_order
 from backend.database import create_tables, get_db, Order as DBOrder
 import json
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 app = FastAPI(title="Restaurant AI")
+
+app.mount("/static", StaticFiles(directory="frontend"), name="static")
+
+@app.get("/app")
+async def serve_frontend():
+    return FileResponse("frontend/index.html")
+
+@app.get("/dashboard")
+async def serve_dashboard():
+    return FileResponse("frontend/dashboard.html")
 
 app.add_middleware(
     CORSMiddleware,
